@@ -39,4 +39,12 @@ const height = buf.readUInt32BE(20);
 if (width > 1024 || height > 1024) {
   throw new Error(`entry.png too large: ${width}x${height}`);
 }
+// The first chunk must be IHDR and the file must end with a whole IEND chunk,
+// so a truncated or non-PNG copy is refused instead of submitted.
+if (buf.toString('latin1', 12, 16) !== 'IHDR') {
+  throw new Error('entry.png has no IHDR chunk');
+}
+if (buf.readUInt32BE(buf.length - 12) !== 0 || buf.toString('latin1', buf.length - 8, buf.length - 4) !== 'IEND') {
+  throw new Error('entry.png has no IEND trailer');
+}
 console.log(`Wrote ${dest}: ${width}x${height} PNG, ${size} bytes — VELMORA`);
